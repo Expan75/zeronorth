@@ -5,7 +5,7 @@ variable "owner" {
 
 variable "environment" {
   type = string
-  default = "eu-north-1"
+  default = "personal"
 }
 
 variable "region" {
@@ -23,10 +23,11 @@ variable "trigger" {
 
 variable "service" {
   type    = object({
-    entrypoint    = string
-    filepath      = string
+    entrypoint    = object({
+      filepath      = string    # if relative, depends on where the module is imported and called! 
+      function      = string
+    }) 
     language      = string
     name          = string
-    project_root  = string
   })
 }

@@ -60,7 +60,7 @@ resource "aws_iam_role" "storage_hook_iam_role" {
 
 data "archive_file" "lambda" {
   type        = "zip"
-  source_file = "lambda.js"
+  source_file = "${var.service.entrypoint.filepath}"
   output_path = "${var.service.name}.zip"
 }
 
@@ -69,7 +69,7 @@ resource "aws_lambda_function" "storage_hook_lambda" {
   # path.module in the filename.
   filename          = "${var.service.name}.zip"
   function_name     = var.service.name
-  handler           = var.service.entrypoint 
+  handler           = var.service.entrypoint.function 
   role              = aws_iam_role.storage_hook_iam_role.arn
   runtime           = local.lambda.language 
   source_code_hash  = data.archive_file.lambda.output_base64sha256

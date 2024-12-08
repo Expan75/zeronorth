@@ -36,11 +36,16 @@ variable "owner" {
   type    = string
 }
 
+
+locals {
+  normalized_region = replace(var.region, "-", "_")
+}
+
 # output as we need to export to other modules
 output "config" {
   value = {
     environment = local.environment[var.environment] 
     owner       = var.owner 
-    region      = local.region[var.region]
+    region      = local.region[local.normalized_region]
   }
 }

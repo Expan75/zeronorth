@@ -23,11 +23,12 @@ terraform {
 # consts
 locals {
   service = {
-    name          = "challenge"
-    entrypoint    = "src/main.py:on_upload"
-    filepath      = "../../challenge"
-    language      = "python3.12"
-    project_root  = "../../challenge"
+    entrypoint = {
+      filepath      = "../../challenge/main.py"
+      function      = "on_upload" 
+    }
+    language        = "python"
+    name            = "challenge"
   }
   trigger = {
     bucket = "jsonbucket" 
