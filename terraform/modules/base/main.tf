@@ -1,8 +1,9 @@
 # enums
 locals {
   environment = {
-    development = "development"
-    production  = "production"
+    personal    = "personal"      # local development 
+    development = "development"   # latest green build
+    production  = "production"    # latest release
   } 
   
   email = {
@@ -16,8 +17,8 @@ locals {
   }
 
   default = {
-    region      = "eu-north-1"
-    environment = "development"
+    region      = local.region 
+    environment = local.environment.personal 
   }
 }
 
@@ -43,8 +44,3 @@ locals {
     region      = local.region[var.region]
   }
 }
-
-output "base" {
-  value = local.globals
-}
-

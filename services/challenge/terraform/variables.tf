@@ -16,6 +16,6 @@ variable "aws_secret_access_key" {
 
 variable "environment" {
   type      = string
-  default   = local.environment.development 
+  default   = "personal" 
 }
 

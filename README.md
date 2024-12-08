@@ -14,7 +14,7 @@ This repo covers the Zero North Terraform interview question
 1. Configure your remote backend. All environmnets rely on a remote storage backend (AWS S3 in this case). Typically, it makes sense to use your primary Cloud provider. An example configuration with S3 is seen below, assuming bucket and access key has been set up. This bucket contain (encryted hopfully) all of terraform state; including sensitive details like credentials and API keys. Access to this bucket should be heavily restricted.
 
 ```bash
-
+tf init -backend-config=backend.conf
 aws
 ```
 
