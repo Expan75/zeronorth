@@ -2,9 +2,6 @@ terraform {
   backend "s3" {} # congiured via backend.conf file
 }
 
-module "base" {
-  source  = "../base"
-}
 
 # consts
 locals {
@@ -13,6 +10,7 @@ locals {
   buckets   = []
 }
 
+/* If there's time
 module "secrets" {
   source            = "../../blocks/secrets"
 }
@@ -24,10 +22,20 @@ module "github" {
     url  = "https://github.com/expan75/zeronorth"
   }
 }
+*/
+
+module "base" {
+  source  = "../base"
+}
 
 module "challenge" {
-  source            = "../../blocks/s3-lambda-hook"
-  environment       = local.env
-  service           = local.service
-  tags              = local.default.tags
+  source            = "../../../terraform/modules/storage-hook"
+  environment       = module.base.env
+  service           = var.service
+  sink = "void"
+  trigger = {
+    bucket = local.service
+    filter = "*.json" 
+    event  = "upload"
+  }
 }

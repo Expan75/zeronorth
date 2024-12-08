@@ -33,9 +33,5 @@ def lambda_handler(event: dict, context: dict):
         log.info(f"{record_sum=}")
     except Exception as e:
         log.exception(e)
-        log.exception(
-            "Error getting object {} from bucket {}. Make sure they exist and your bucket is in the same region as this function.".format(
-                key, bucket
-            )
-        )
+        log.exception("Error getting object {} from bucket {}.".format(key, bucket))
         raise e
