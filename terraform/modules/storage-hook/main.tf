@@ -53,9 +53,20 @@ resource "aws_iam_policy" "storage_hook_iam_policy" {
   policy = data.aws_iam_policy_document.storage_hook_iam_policy_document.json
 }
 
+data "aws_iam_policy_document" "storage_hook_iam_assume_role" {
+  statement {
+    effect = "Allow"
+    principals {
+      type        = "Service"
+      identifiers = ["lambda.amazonaws.com"]
+    }
+    actions = ["sts:AssumeRole"]
+  }
+}
+
 resource "aws_iam_role" "storage_hook_iam_role" {
   name               = local.iam.role.name 
-  assume_role_policy = data.aws_iam_policy_document.storage_hook_iam_policy_document.json
+  assume_role_policy = data.aws_iam_policy_document.storage_hook_iam_assume_role.json
 }
 
 data "archive_file" "lambda" {
