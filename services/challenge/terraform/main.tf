@@ -22,8 +22,18 @@ terraform {
 
 # consts
 locals {
-  service   = "challenge"
-  owner     = "infra@example.com"
+  service = {
+    name          = "challenge"
+    entrypoint    = "src/main.py:on_upload"
+    filepath      = "../../challenge"
+    language      = "python3.12"
+    project_root  = "../../challenge"
+  }
+  trigger = {
+    bucket = "jsonbucket" 
+    filter = "*.json" 
+    event  = "upload"
+  }
 }
 
 /* If there's time
@@ -41,12 +51,8 @@ module "github" {
 */
 
 module "challenge" {
+  owner             = "erik.hakansson"
   source            = "../../../terraform/modules/storage-hook"
-  owner             = local.owner
   service           = local.service
-  trigger = {
-    bucket = "jsonbucket" 
-    filter = "*.json" 
-    event  = "upload"
-  }
+  trigger           = local.trigger
 }

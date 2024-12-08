@@ -3,6 +3,16 @@ variable "owner" {
   type = string
 }
 
+variable "environment" {
+  type = string
+  default = "eu-north-1"
+}
+
+variable "region" {
+  type = string
+  default = "eu-north-1"
+}
+
 variable "trigger" {
   type    = object({
     event   = string
@@ -13,10 +23,10 @@ variable "trigger" {
 
 variable "service" {
   type    = object({
-    name          = string
     entrypoint    = string
     filepath      = string
     language      = string
+    name          = string
     project_root  = string
   })
 }

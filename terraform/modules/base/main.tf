@@ -36,9 +36,9 @@ variable "owner" {
   type    = string
 }
 
-# derived vars 
-locals {
-  globals = {
+# output as we need to export to other modules
+output "config" {
+  value = {
     environment = local.environment[var.environment] 
     owner       = var.owner 
     region      = local.region[var.region]

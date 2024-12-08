@@ -8,12 +8,14 @@ terraform {
 }
 
 module "base" {
-  source  = "../base"
-  owner   = var.owner
+  source      = "../base"
+  environment = var.environment
+  owner       = var.owner
+  region      = var.region
 }
 
 provider "aws" {
-  region = module.base.region
+  region = module.base.config.region
 }
 
 resource "aws_s3_bucket" "hook_storage_bucket" {
@@ -48,18 +50,18 @@ data "aws_iam_policy_document" "storage_hook_iam_policy_document" {
 resource "aws_iam_policy" "storage_hook_iam_policy" {
   name   = local.iam.policy.name 
   path   = "/"
-  policy = data.storage_hook_iam_policy_document.json
+  policy = data.aws_iam_policy_document.storage_hook_iam_policy_document.json
 }
 
-resource "aws_iam_role" "iam_for_lambda" {
+resource "aws_iam_role" "storage_hook_iam_role" {
   name               = local.iam.role.name 
-  assume_role_policy = data.aws_iam_policy_document.assume_role.json
+  assume_role_policy = data.aws_iam_policy_document.storage_hook_iam_policy_document.json
 }
 
 data "archive_file" "lambda" {
   type        = "zip"
   source_file = "lambda.js"
-  output_path = "lambda_function_payload.zip"
+  output_path = "${var.service.name}.zip"
 }
 
 resource "aws_lambda_function" "storage_hook_lambda" {
@@ -67,23 +69,8 @@ resource "aws_lambda_function" "storage_hook_lambda" {
   # path.module in the filename.
   filename          = "${var.service.name}.zip"
   function_name     = var.service.name
-  handler           = "index.test"
-  role              = aws_iam_role.iam_for_lambda.arn
+  handler           = var.service.entrypoint 
+  role              = aws_iam_role.storage_hook_iam_role.arn
   runtime           = local.lambda.language 
   source_code_hash  = data.archive_file.lambda.output_base64sha256
-}
-
-resource "aws_lambda_function" "storage_hook" {
-  function_name = var.lambda.name 
-  logging_config {
-    log_format = "Text"
-  }
-  depends_on = [
-    aws_iam_role_policy_attachment.lambda_logs,
-  ]
-}
-
-resource "aws_cloudwatch_log_group" "log_group" {
-  name              = "/aws/lambda/${var.lambda_function_name}"
-  retention_in_days = 1
 }

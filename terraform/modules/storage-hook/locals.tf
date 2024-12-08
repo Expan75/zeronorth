@@ -6,14 +6,14 @@ locals {
     python = "python3.12"
   }
 
-  namespace = "${module.base.region}-${module.base.environment}-${service.name}"
+  namespace = "${module.base.config.region}-${module.base.config.environment}-${var.service.name}"
   bucket = {
-    name = "${local.namepsace}-${local.trigger.bucket}" 
+    name = "${local.namespace}-${local.trigger.bucket}" 
     tags = {
-      Region      = module.base.region 
-      Environment = module.base.environment
-      Region      = module.base.region
-      Service     = var.service
+      Region      = module.base.config.region 
+      Environment = module.base.config.environment
+      Region      = module.base.config.region
+      Service     = var.service.name
     }
   }
   
@@ -27,8 +27,8 @@ locals {
   }
   
   lambda = {
-    name      = "${local.namepsace}-lambda" 
-    region    = module.base.region 
+    name      = "${local.namespace}-lambda" 
+    region    = module.base.config.region 
     language  = local.language[var.service.language]
   }
   
