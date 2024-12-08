@@ -1,17 +1,10 @@
-
-module "base" {
-  source  = "../base"
-}
-
 locals {
-  sink = {
-    void   = "void"
-  }
   event = {
     upload = "upload"
   }
   language = {
     python = "python3.12"
+  }
 
   namespace = "${module.base.region}-${module.base.environment}-${service.name}"
   bucket = {
@@ -29,7 +22,7 @@ locals {
       name = "${local.namespace}-iam-policy"
     }
     role = {
-      name =    = "${local.namespace}-iam-policy" 
+      name    = "${local.namespace}-iam-policy" 
     }
   }
   
@@ -44,6 +37,4 @@ locals {
     event     = local.event[var.trigger.event]
     filter    = var.trigger.filter
   }
-  
-  sink = local.sink[var.sink]
 }

@@ -13,23 +13,23 @@ locals {
   }
 
   region = {
-    "eu-north-1"
+    eu_north_1 = "eu-north-1"
   }
 
   default = {
-    region      = local.region 
+    region      = local.region.eu_north_1 
     environment = local.environment.personal 
   }
 }
 
 variable "region" {
   type    = string
-  default = local.default.region 
+  default = "eu-north-1" 
 }
 
 variable "environment" {
   type    = string
-  default = local.default.environment 
+  default = "personal" 
 }
 
 variable "owner" {

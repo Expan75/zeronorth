@@ -9,10 +9,11 @@ terraform {
 
 module "base" {
   source  = "../base"
+  owner   = var.owner
 }
 
 provider "aws" {
-  region = module.base.var.region
+  region = module.base.region
 }
 
 resource "aws_s3_bucket" "hook_storage_bucket" {

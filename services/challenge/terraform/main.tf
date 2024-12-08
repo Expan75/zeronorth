@@ -1,5 +1,23 @@
 terraform {
-  backend "s3" {} # congiured via backend.conf file
+  required_version = "~> 1.9.8"
+
+  backend "s3" {
+    skip_credentials_validation = true
+    skip_metadata_api_check     = true
+    skip_region_validation      = true
+    skip_requesting_account_id  = true
+    skip_s3_checksum            = true
+    use_path_style              = true
+    endpoints = {
+      s3 = "https://437871a8759ccae530c08bbd3dfd265f.eu.r2.cloudflarestorage.com"
+    }
+  }
+  required_providers {
+    cloudflare = {
+      source  = "cloudflare/cloudflare"
+      version = "~> 4"
+    }
+  }
 }
 
 # consts
@@ -24,9 +42,10 @@ module "github" {
 
 module "challenge" {
   source            = "../../../terraform/modules/storage-hook"
+  owner             = local.owner
   service           = local.service
   trigger = {
-    bucket = local.service
+    bucket = "jsonbucket" 
     filter = "*.json" 
     event  = "upload"
   }

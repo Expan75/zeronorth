@@ -1,4 +1,8 @@
 
+variable "owner" {
+  type = string
+}
+
 variable "trigger" {
   type    = object({
     event   = string
