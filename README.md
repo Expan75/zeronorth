@@ -6,7 +6,8 @@ This repo covers the Zero North Terraform interview question
 
 ### Dependencies
 
-- Terraform v1.9.8
+- [Terraform v1.9.8](https://www.terraform.io/)
+- [GitHub CLI v2.62.0](https://cli.github.com/)
 
 ### First-time setup
 
