@@ -7,132 +7,51 @@ terraform {
   }
 }
 
-provider "aws" {
-  region = module.base.var.region
-}
-
-locals {
-  sink = {
-    void   = "void"
-  }
- 
-  event = {
-    upload = "upload"
-  }
-
-  language = {
-    python = "python3.12"
-  }
-}
-
 module "base" {
   source  = "../base"
 }
 
-variable "trigger" {
-  type    = object({
-    event   = string
-    bucket  = string
-    filter  = string
-  })
-  default = {
-    event   = local.trigger.upload
-    bucket  = "myservice" 
-    filter  = "*" 
-  }
-}
-
-variable "service" {
-  type    = object({
-    name          = string
-    entrypoint    = string
-    filepath      = string
-    language      = string
-    project_root  = string
-  })
-}
-
-variable "sink" {
-  type = string
-  default = local.sink.void
-}
-
-locals {
-  lambda = {
-    name      = "${module.base.region}-${module.base.env}-${service.name}" 
-    region    = module.base.region 
-    language  = local.language[var.service.language]
-  }
-  tags = {
-    Region      = module.base.region 
-    Environment = module.base.environment
-    Region      = module.base.region
-    Service     = var.service
-  }
-  trigger   = {
-    bucket    = local.trigger.bucket
-    event     = local.event[var.trigger.event]
-  }
-  sink = local.sink[var.sink]
-
+provider "aws" {
+  region = module.base.var.region
 }
 
 resource "aws_s3_bucket" "hook_storage_bucket" {
-  bucket  = "${module.base.region}-${module.base.environment}-${service.name}-${trigger.bucket}"  
-  tags    = local.tags
+  bucket  = local.bucket.name 
+  tags    = local.bucket.tags
 }
-
 
 data "aws_iam_policy_document" "storage_hook_iam_policy_document" {
   statement {
-    sid = "1"
     actions = [
       "s3:ListAllMyBuckets",
       "s3:GetBucketLocation",
     ]
     resources = [
-      "arn:aws:s3:::*",
+      "arn:aws:s3:::${local.bucket.name}",
     ]
   }
-
   statement {
     actions = [
-      "s3:ListBucket",
+      "s3:Get*",
+      "s3:List*",
+      "s3:Describe*",
+      "s3-object-lambda:Get*",
+      "s3-object-lambda:List*"
     ]
     resources = [
-      "arn:aws:s3:::${var.s3_bucket_name}",
-    ]
-    condition {
-      test     = "StringLike"
-      variable = "s3:prefix"
-      values = [
-        "",
-        "home/",
-        "home/&{aws:username}/",
-      ]
-    }
-  }
-
-  statement {
-    actions = [
-      "s3:*",
-    ]
-    resources = [
-      "arn:aws:s3:::${var.s3_bucket_name}/home/&{aws:username}",
-      "arn:aws:s3:::${var.s3_bucket_name}/home/&{aws:username}/*",
+      "arn:aws:s3:::${local.bucket.name}/${local.trigger.filter}",
     ]
   }
 }
 
-resource "aws_iam_policy" "example" {
-  name   = "example_policy"
+resource "aws_iam_policy" "storage_hook_iam_policy" {
+  name   = local.iam.policy.name 
   path   = "/"
-  policy = data.aws_iam_policy_document.example.json
+  policy = data.storage_hook_iam_policy_document.json
 }
-
 
 resource "aws_iam_role" "iam_for_lambda" {
-  name               = "iam_for_lambda"
+  name               = local.iam.role.name 
   assume_role_policy = data.aws_iam_policy_document.assume_role.json
 }
 
@@ -142,10 +61,10 @@ data "archive_file" "lambda" {
   output_path = "lambda_function_payload.zip"
 }
 
-resource "aws_lambda_function" "storage_hook" {
+resource "aws_lambda_function" "storage_hook_lambda" {
   # If the file is not in the current working directory you will need to include a
   # path.module in the filename.
-  filename          = "lambda_function_payload.zip"
+  filename          = "${var.service.name}.zip"
   function_name     = var.service.name
   handler           = "index.test"
   role              = aws_iam_role.iam_for_lambda.arn

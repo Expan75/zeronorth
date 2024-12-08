@@ -16,4 +16,4 @@ rye test
 
 ### Deployment
 
-Handled by Terraform. See root README.md for instructions.
+Handled by CI/CD via Terraform. See root README.md for instructions.

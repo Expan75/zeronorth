@@ -2,12 +2,10 @@ terraform {
   backend "s3" {} # congiured via backend.conf file
 }
 
-
 # consts
 locals {
   service   = "challenge"
-  location  = "Copenhagen, Denmark"
-  buckets   = []
+  owner     = "infra@example.com"
 }
 
 /* If there's time
@@ -24,15 +22,9 @@ module "github" {
 }
 */
 
-module "base" {
-  source  = "../base"
-}
-
 module "challenge" {
   source            = "../../../terraform/modules/storage-hook"
-  environment       = module.base.env
-  service           = var.service
-  sink = "void"
+  service           = local.service
   trigger = {
     bucket = local.service
     filter = "*.json" 

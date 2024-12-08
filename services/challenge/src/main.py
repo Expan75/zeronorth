@@ -1,5 +1,3 @@
-# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
-# SPDX-License-Identifier: Apache-2.0
 import json
 import urllib.parse
 import boto3
@@ -12,7 +10,7 @@ log.debug("loading function")
 s3_client = boto3.client("s3")
 
 
-def lambda_handler(event: dict, context: dict):
+def on_upload(event: dict, context: dict):
 
     # debug logging
     fmt_event = json.dumps(event, indent=2)
