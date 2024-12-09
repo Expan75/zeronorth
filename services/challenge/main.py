@@ -24,14 +24,12 @@ def sum_json_numbers(raw_json: str) -> float:
     return sum_record_numbers(entries)
 
 
-def on_upload(event: dict, context: dict):
+def on_upload(event: dict):
 
     # debug logging
     fmt_event = json.dumps(event, indent=2)
-    fmt_context = json.dumps(context, indent=2)
     log.debug("function was called")
     log.debug(fmt_event)
-    log.debug(fmt_context)
 
     # Get the object from the event and show its content type
     bucket = event["Records"][0]["s3"]["bucket"]["name"]

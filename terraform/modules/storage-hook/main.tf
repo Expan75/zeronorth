@@ -18,13 +18,13 @@ provider "aws" {
   region = module.base.config.region
 }
 
-resource "aws_s3_bucket" "storage_hook_bucket" {
+resource "aws_s3_bucket" "this" {
   bucket  = local.bucket.name 
   tags    = local.bucket.tags
 }
 
 
-data "aws_iam_policy_document" "storage_hook_iam_policy_document" {
+data "aws_iam_policy_document" "lambda_to_s3_policy" {
   statement {
     actions = [
       "s3:ListAllMyBuckets",
@@ -48,13 +48,13 @@ data "aws_iam_policy_document" "storage_hook_iam_policy_document" {
   }
 }
 
-resource "aws_iam_policy" "storage_hook_iam_policy" {
+resource "aws_iam_policy" "lambda_to_s3_policy" {
   name   = local.iam.policy.name 
   path   = "/"
-  policy = data.aws_iam_policy_document.storage_hook_iam_policy_document.json
+  policy = data.aws_iam_policy_document.lambda_to_s3_policy.json
 }
 
-data "aws_iam_policy_document" "storage_hook_iam_assume_role" {
+data "aws_iam_policy_document" "s3_to_lambda_policy" {
   statement {
     effect = "Allow"
     principals {
@@ -65,46 +65,49 @@ data "aws_iam_policy_document" "storage_hook_iam_assume_role" {
   }
 }
 
-resource "aws_iam_role" "storage_hook_iam_role" {
+resource "aws_iam_role" "this" {
   name               = local.iam.role.name 
-  assume_role_policy = data.aws_iam_policy_document.storage_hook_iam_assume_role.json
+  assume_role_policy = data.aws_iam_policy_document.s3_to_lambda_policy.json
 }
 
-data "archive_file" "lambda" {
+data "archive_file" "this" {
   type        = "zip"
   source_file = "${var.service.entrypoint.filepath}"
   output_path = "${var.service.name}.zip"
 }
 
-resource "aws_lambda_function" "storage_hook_lambda" {
-  # If the file is not in the current working directory you will need to include a
-  # path.module in the filename.
+resource "aws_lambda_function" "this" {
   filename          = "${var.service.name}.zip"
-  function_name     = var.service.name
+  function_name     = local.lambda.name 
   handler           = var.service.entrypoint.function 
-  role              = aws_iam_role.storage_hook_iam_role.arn
+  role              = aws_iam_role.this.arn
   runtime           = local.lambda.language 
-  source_code_hash  = data.archive_file.lambda.output_base64sha256
+  source_code_hash  = data.archive_file.this.output_base64sha256
 }
 
-resource "aws_lambda_permission" "allow_storage_hook" {
+resource "aws_lambda_permission" "this" {
   statement_id  = "AllowExecutionFromS3Bucket"
   action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.storage_hook_lambda.arn
+  function_name = aws_lambda_function.this.arn
   principal     = "s3.amazonaws.com"
-  source_arn    = aws_s3_bucket.storage_hook_bucket.arn
+  source_arn    = aws_s3_bucket.this.arn
 }
 
-resource "aws_s3_bucket_notification" "storage_hook_notification" {
-  bucket = aws_s3_bucket.storage_hook_bucket.id
+resource "aws_s3_bucket_notification" "this" {
+  bucket = aws_s3_bucket.this.id
   lambda_function {
-    lambda_function_arn = aws_lambda_function.storage_hook_lambda.arn
+    lambda_function_arn = aws_lambda_function.this.arn
     events              = ["s3:ObjectCreated:*"]
   }
-  depends_on = [aws_lambda_permission.allow_storage_hook]
+  depends_on = [aws_lambda_permission.this]
 }
 
-data "aws_iam_policy_document" "lambda_logging" {
+resource "aws_cloudwatch_log_group" "this" {
+  name              = "/aws/lambda/${local.lambda.name}"
+  retention_in_days = 1 
+}
+
+data "aws_iam_policy_document" "logging" {
   statement {
     effect = "Allow"
     actions = [
@@ -116,14 +119,14 @@ data "aws_iam_policy_document" "lambda_logging" {
   }
 }
 
-resource "aws_iam_policy" "lambda_logging" {
+resource "aws_iam_policy" "logging" {
   name        = "lambda_logging"
   path        = "/"
   description = "IAM policy for logging from a lambda"
-  policy      = data.aws_iam_policy_document.lambda_logging.json
+  policy      = data.aws_iam_policy_document.logging.json
 }
 
-resource "aws_iam_role_policy_attachment" "lambda_logs" {
-  role       = aws_iam_role.storage_hook_iam_role.name
-  policy_arn = aws_iam_policy.lambda_logging.arn
+resource "aws_iam_role_policy_attachment" "logging" {
+  role       = aws_iam_role.this.name
+  policy_arn = aws_iam_policy.logging.arn
 }
