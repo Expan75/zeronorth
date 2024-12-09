@@ -18,10 +18,11 @@ provider "aws" {
   region = module.base.config.region
 }
 
-resource "aws_s3_bucket" "hook_storage_bucket" {
+resource "aws_s3_bucket" "storage_hook_bucket" {
   bucket  = local.bucket.name 
   tags    = local.bucket.tags
 }
+
 
 data "aws_iam_policy_document" "storage_hook_iam_policy_document" {
   statement {
@@ -84,4 +85,45 @@ resource "aws_lambda_function" "storage_hook_lambda" {
   role              = aws_iam_role.storage_hook_iam_role.arn
   runtime           = local.lambda.language 
   source_code_hash  = data.archive_file.lambda.output_base64sha256
+}
+
+resource "aws_lambda_permission" "allow_storage_hook" {
+  statement_id  = "AllowExecutionFromS3Bucket"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.storage_hook_lambda.arn
+  principal     = "s3.amazonaws.com"
+  source_arn    = aws_s3_bucket.storage_hook_bucket.arn
+}
+
+resource "aws_s3_bucket_notification" "storage_hook_notification" {
+  bucket = aws_s3_bucket.storage_hook_bucket.id
+  lambda_function {
+    lambda_function_arn = aws_lambda_function.storage_hook_lambda.arn
+    events              = ["s3:ObjectCreated:*"]
+  }
+  depends_on = [aws_lambda_permission.allow_storage_hook]
+}
+
+data "aws_iam_policy_document" "lambda_logging" {
+  statement {
+    effect = "Allow"
+    actions = [
+      "logs:CreateLogGroup",
+      "logs:CreateLogStream",
+      "logs:PutLogEvents",
+    ]
+    resources = ["arn:aws:logs:*:*:*"]
+  }
+}
+
+resource "aws_iam_policy" "lambda_logging" {
+  name        = "lambda_logging"
+  path        = "/"
+  description = "IAM policy for logging from a lambda"
+  policy      = data.aws_iam_policy_document.lambda_logging.json
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_logs" {
+  role       = aws_iam_role.storage_hook_iam_role.name
+  policy_arn = aws_iam_policy.lambda_logging.arn
 }
